@@ -1,10 +1,16 @@
 import net.http
 import os
+import json
 import cli
 
 const home_dire = os.home_dir()
 const neovim_url = 'https://github.com/neovim/neovim/releases/download/nightly/nvim-macos.tar.gz'
 const target_dir = home_dire + '/.local/share/nv_manager/nightly/'
+const tags_url = 'https://api.github.com/repos/neovim/neovim/tags'
+
+struct Tag {
+	name string
+}
 
 fn main() {
 	mut app := cli.Command{
@@ -37,11 +43,33 @@ fn main() {
 					update_nightly()
 				}
 			},
+			cli.Command{
+				name: 'list_remote'
+				execute: fn (cmd cli.Command) ! {
+					list_remote_versions()
+				}
+			},
 			// Add other commands here
 		]
 	}
 	app.setup()
 	app.parse(os.args)
+}
+
+fn list_remote_versions() {
+	resp := http.get(tags_url) or {
+		eprintln('Failed to fetch Neovim versions: ${err}')
+		return
+	}
+
+	tags := json.decode([]Tag, resp.body) or {
+		eprintln('Failed to decode JSON: ${err}')
+		return
+	}
+
+	for tag in tags {
+		println(tag.name)
+	}
 }
 
 fn update_nightly() {
