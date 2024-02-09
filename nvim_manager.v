@@ -67,8 +67,13 @@ fn list_remote_versions() {
 		return
 	}
 
+	mut count := 0
 	for tag in tags {
+		if count >= 7 {
+			break
+		}
 		println(tag.name)
+		count++
 	}
 }
 
