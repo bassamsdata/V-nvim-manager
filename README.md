@@ -1,6 +1,6 @@
 # Vnvm  - V Neovim Manager
 
-This is a python app that helps you manage my neovim installations written in [Vlang](https://vlang.io/) as part of my learning process.
+This is a Vlang cli app that helps you manage neovim installations, written in [Vlang](https://vlang.io/) as part of my learning process.
 
 
 ## Current Status
@@ -25,10 +25,11 @@ vnvm update
 ```
 
 ## TODO:
-- [ ] initial nightly version
+- [x] initial nightly version
+- [x] add list_remote versions
 - [ ] add support for stable
 - [ ] add support for multiple versions of stable
-- [ ] ass multiple support command like list, list-remote, clean etc
+- [ ] ass multiple support command like list installed, clean etc
 
 ## Contributing
 
