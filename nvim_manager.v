@@ -194,6 +194,7 @@ fn install_nightly() {
 		return
 	}
 
+	// TODO: move symlink to a new function called use
 	symlink_path := '/usr/local/bin/nvim'
 	// Check if the symlink already exists
 	if os.exists(symlink_path) {
