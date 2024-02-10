@@ -78,7 +78,7 @@ fn list_remote_versions() {
 }
 
 fn update_nightly() {
-	nightly_path := target_dir + 'nvim-macos'
+	nightly_path := target_nightly + 'nvim-macos'
 	if os.exists(nightly_path) {
 		// Remove the existing nightly version
 		os.rmdir_all(nightly_path) or {
@@ -96,7 +96,7 @@ fn install_nightly() {
 	params := os.MkdirParams{
 		mode: 0o755 // Permissions for the directory
 	}
-	os.mkdir_all(target_dir, params) or {
+	os.mkdir_all(target_nightly, params) or {
 		eprintln('Failed to create target directory: ${err}')
 		return
 	}
@@ -108,14 +108,14 @@ fn install_nightly() {
 	}
 
 	// Save the downloaded file to the target directory
-	file_path := target_dir + 'nvim-macos.tar.gz'
+	file_path := target_nightly + 'nvim-macos.tar.gz'
 	os.write_file(file_path, resp.body) or {
 		eprintln('Failed to save Neovim archive: ${err}')
 		return
 	}
 
-	// Extract the archive (you may need to install `tar` if it's not available)
-	extract_command := 'tar xzvf ${file_path} -C ${target_dir}'
+	// Extract the archive
+	extract_command := 'tar xzvf ${file_path} -C ${target_nightly}'
 	result := os.execute(extract_command)
 	if result.exit_code != 0 {
 		eprintln('Failed to extract Neovim: ${result.output}')
@@ -139,7 +139,7 @@ fn install_nightly() {
 	}
 
 	// Create a symlink to the extracted binary in /usr/local/bin/
-	neovim_binary := target_dir + '/nvim-macos/bin/nvim'
+	neovim_binary := target_nightly + '/nvim-macos/bin/nvim'
 	// Now create the new symlink
 	os.symlink(neovim_binary, symlink_path) or {
 		eprintln('Failed to create symlink: ${err}')
