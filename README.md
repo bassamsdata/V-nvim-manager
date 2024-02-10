@@ -6,7 +6,7 @@
   <h3 align="center">Vnvm  - V Neovim Manager</h3>
 
 </div>
-
+<hr>
 
 This is a Vlang cli app that helps you manage neovim installations, written in [Vlang](https://vlang.io/) as part of my learning process.
 
