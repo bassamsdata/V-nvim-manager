@@ -36,8 +36,7 @@ fn main() {
 					if version == 'nightly' {
 						install_nightly()
 					} else {
-						// TODO: Implement logic for installing other versions
-						eprintln('Only "nightly" version is supported right now.')
+						install_specific_stable(version)
 					}
 				}
 			},
@@ -70,17 +69,58 @@ fn list_remote_versions() {
 		eprintln('Failed to decode JSON: ${err}')
 		return
 	}
-
+	// print only the first 7 versions
 	mut count := 0
 	for tag in tags {
 		if count >= 7 {
 			break
 		}
 		println(tag.name)
-		count++
+		count++ // Increment the count by one every time `++`
 	}
 }
 
+fn install_specific_stable(version string) {
+	// TODO: insure this is the correct way of dirs
+	stable_url := stable_base_url + version + '/nvim-macos.tar.gz'
+	target_dir := target_dir_stable + version + '/'
+
+	// Create the target directory if it does not exist
+	params := os.MkdirParams{
+		mode: 0o755 // Permissions for the directory
+	}
+	os.mkdir_all(target_dir, params) or {
+		eprintln('Failed to create target directory: ${err}')
+		return
+	}
+
+	// Download the Neovim archive
+	resp := http.get(stable_url) or {
+		eprintln('Failed to download Neovim: ${err}')
+		return
+	}
+
+	// Save the downloaded file to the target directory
+	file_path := target_dir + 'nvim-macos.tar.gz'
+	os.write_file(file_path, resp.body) or {
+		eprintln('Failed to save Neovim archive: ${err}')
+		return
+	}
+
+	// Extract the archive
+	extract_command := 'tar xzvf ${file_path} -C ${target_dir}'
+	result := os.execute(extract_command)
+	if result.exit_code != 0 {
+		eprintln('Failed to extract Neovim: ${result.output}')
+		return
+	}
+
+	// Remove the downloaded archive
+	os.rm(file_path) or {
+		eprintln('Failed to remove the Neovim archive')
+		return
+	}
+}
 fn update_nightly() {
 	nightly_path := target_nightly + 'nvim-macos'
 	if os.exists(nightly_path) {
