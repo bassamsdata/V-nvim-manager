@@ -3,9 +3,13 @@ import os
 import json
 import cli
 
+// TODO: organize all these commands
 const home_dire = os.home_dir()
 const neovim_url = 'https://github.com/neovim/neovim/releases/download/nightly/nvim-macos.tar.gz'
-const target_dir = home_dire + '/.local/share/nv_manager/nightly/'
+const target_nightly = home_dire + '/.local/share/nv_manager/nightly/'
+const stable_base_url = 'https://github.com/neovim/neovim/releases/download/v'
+const target_dir_nightly = home_dire + '/.local/share/nv_manager/nightly/'
+const target_dir_stable = home_dire + '/.local/share/nv_manager/stable/'
 const tags_url = 'https://api.github.com/repos/neovim/neovim/tags'
 
 struct Tag {
