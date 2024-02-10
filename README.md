@@ -27,11 +27,6 @@ to install latest nightly version from neovim
 vnvm install nightly
 ```
 
-
-
-knsds ksds d]sdnskdns
-dmsdksnd 
-
 to update to the latest nightly version from neovim
 ```sh
 vnvm update
