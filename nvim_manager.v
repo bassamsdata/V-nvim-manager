@@ -120,7 +120,29 @@ fn install_specific_stable(version string) {
 		eprintln('Failed to remove the Neovim archive')
 		return
 	}
+
+	// TODO: Move the symlink to a new function called use
+	symlink_path := '/usr/local/bin/nvim'
+	// Check if the symlink already exists
+	if os.exists(symlink_path) {
+		// Remove the existing symlink
+		os.rm(symlink_path) or {
+			eprintln('Failed to remove existing symlink: ${err}')
+			return
+		}
+	}
+
+	// Create a symlink to the extracted binary in /usr/local/bin/
+	neovim_binary := target_dir + '/nvim-macos/bin/nvim'
+	// Now create the new symlink
+	os.symlink(neovim_binary, symlink_path) or {
+		eprintln('Failed to create symlink: ${err}')
+		return
+	}
+
+	println('Neovim version ${version} installed successfully!')
 }
+
 fn update_nightly() {
 	nightly_path := target_nightly + 'nvim-macos'
 	if os.exists(nightly_path) {
