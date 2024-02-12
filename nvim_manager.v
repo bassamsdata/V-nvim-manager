@@ -63,6 +63,18 @@ fn main() {
 					use_version(version)
 				}
 			},
+			cli.Command{
+				name: 'check'
+				execute: fn (cmd cli.Command) ! {
+					print_current_version()
+				}
+			},
+			cli.Command{
+				name: 'list_installed'
+				execute: fn (cmd cli.Command) ! {
+					list_installed_versions()
+				}
+			},
 			// Add other commands here
 		]
 	}
