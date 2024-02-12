@@ -2,6 +2,7 @@ import net.http
 import os
 import json
 import cli
+import term
 
 // TODO: organize all these commands
 const home_dire = os.home_dir()
@@ -82,6 +83,40 @@ fn main() {
 	app.parse(os.args)
 }
 
+// TODO: move a lot of these helper functions to different file
+// Function to print a header with a divider line
+fn print_header(text string, divider string) {
+	header := term.header(text, divider)
+	println(header)
+}
+
+// Function to print a message with a specific color
+fn print_colored_message(color_function fn (string) string, message string) {
+	colored_message := color_function(message)
+	println(colored_message)
+}
+
+// Function to print a warning message in yellow
+fn print_warning_message(message string) {
+	print_colored_message(term.warn_message, message)
+}
+
+// Function to print an error message in red
+fn print_error_message(message string) {
+	print_colored_message(term.fail_message, message)
+}
+
+// Function to print a success message in green
+fn print_success_message(message string) {
+	print_colored_message(term.ok_message, message)
+}
+
+// Function to print a list of items with a specific prefix
+fn print_item_list(prefix string, items []string) {
+	for item in items {
+		println('${prefix} ${item}')
+	}
+}
 fn use_version(version string) {
 	symlink_path := '/usr/local/bin/nvim'
 	mut neovim_binary := ''
