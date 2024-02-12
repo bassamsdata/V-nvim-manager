@@ -105,6 +105,30 @@ fn use_version(version string) {
 	println('Using Neovim version ${version} now.')
 }
 
+fn check_current_version() string {
+	symlink_path := '/usr/local/bin/nvim'
+	if !os.exists(symlink_path) || !os.is_link(symlink_path) {
+		eprintln('Neovim is not symlinked.')
+		return ''
+	}
+
+	// Use the `readlink` command to get the absolute path of the symlink
+	result := os.execute('readlink ${symlink_path}')
+	if result.exit_code != 0 {
+		eprintln('Failed to execute readlink command: ${result.output}')
+		return ''
+	}
+
+	// Parse the output to find the version
+	// This assumes the symlink output includes the version in the path
+	symlink_target := result.output.trim('\n') // Correct usage of trim_space
+	major_version, minor_version := extract_version_from_path(symlink_target)
+	if major_version == '' {
+		eprintln('Failed to parse version from symlink target.')
+		return ''
+	}
+	return minor_version
+}
 fn list_remote_versions() {
 	resp := http.get(tags_url) or {
 		eprintln('Failed to fetch Neovim versions: ${err}')
