@@ -81,6 +81,13 @@ fn use_version(version string) {
 		neovim_binary = target_dir_stable + version + '/nvim-macos/bin/nvim'
 	}
 
+	// Check if the specified version's binary exists
+	if !os.exists(neovim_binary) {
+		eprintln('The specified version (${version}) is not installed.')
+		eprintln('Please install the version using "nvimv install ${version}".')
+		return
+	}
+
 	// Remove the existing symlink
 	if os.exists(symlink_path) {
 		os.rm(symlink_path) or {
