@@ -64,6 +64,7 @@ fn main() {
 					use_version(version)
 				}
 			},
+			// TODO: combine both command in one
 			cli.Command{
 				name: 'check'
 				execute: fn (cmd cli.Command) ! {
@@ -302,6 +303,7 @@ fn install_nightly() {
 		return
 	}
 
+  // TODO: add rollback feature and remove this to if or different command
 	// Remove the downloaded archive
 	os.rm(file_path) or {
 		eprintln('Failed to remove the Neovim archive')
