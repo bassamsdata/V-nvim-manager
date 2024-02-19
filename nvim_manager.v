@@ -118,6 +118,39 @@ fn print_item_list(prefix string, items []string) {
 		println('${prefix} ${item}')
 	}
 }
+
+	// Print the header
+	println('Installed Versions:')
+	println('---------------------')
+	// Print the versions with a marker for the current version
+	current_version := get_current_version(symlink_path)
+	println('Current version: ${current_version}')
+	// Print the nightly versions
+	for version in stable_versions {
+		marker := if version == current_version { '*' } else { '' }
+		println('${version}${marker}')
+	}
+	for version in nightly_versions {
+		marker := if version == current_version { '*' } else { '' }
+		println('${version}${marker}')
+	}
+
+	// Print the nightly versions
+	println('Nightly versions:')
+	for version in nightly_versions {
+		println('- ${version}')
+	}
+
+	// Print the stable versions
+	println('Stable versions:')
+	for version in stable_versions {
+		println('- ${version}')
+	}
+
+	// Print the footer
+	println('---------------------')
+}
+
 // TODO: delete this one
 fn get_current_version(symlink_path string) string {
 	// Read the symlink to get the path of the active Neovim binary
