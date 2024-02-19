@@ -81,6 +81,7 @@ fn main() {
 				name: 'rollback'
 				execute: fn (cmd cli.Command) ! {
 					if cmd.args.len < 1 {
+						// TODO: need to bulid something like roollback 1 ro 2 ro 3...
 						eprintln('Please specify a version to rollback to.')
 						return
 					}
@@ -94,6 +95,7 @@ fn main() {
 	app.parse(os.args)
 }
 
+// Rollback to version --------------------------------------------------------
 fn rollback_to_version(version string) {
 	// TODO: Check if the version exists in the installed versions
 	// If not, print an error and return
@@ -118,11 +120,48 @@ fn rollback_to_version(version string) {
 	println('Rolled back to version ${version} successfully.')
 }
 
-// TODO: move a lot of these helper functions to different file
-// Function to print a header with a divider line
-fn print_header(text string, divider string) {
-	header := term.header(text, divider)
-	println(header)
+// FIX: this function is not working
+// 1. read the version list and create one if it doesn't exist
+// 2. check if the version is already in the list
+// 3. if it's not in the list, add it
+// 4. write the new version list to the JSON file
+fn update_version_list(version string) {
+	version_list_path := home_dire + '/.local/share/nv_manager/version_list.json'
+	mut version_list := []VersionEntry{}
+
+	// Read the existing version list if it exists
+	if os.exists(version_list_path) {
+		version_list_content := os.read_file(version_list_path) or {
+			eprintln('Failed to read version list: ${err}')
+			return
+		}
+		version_list = json.decode([]VersionEntry, version_list_content) or {
+			eprintln('Failed to decode version list: ${err}')
+			return
+		}
+	}
+
+	// Check if the version is already in the list
+	for entry in version_list {
+		if entry.version == version {
+			// Version is already in the list, so we don't need to add it again
+			return
+		}
+	}
+
+	// Add the new version to the list
+	new_entry := VersionEntry{
+		version: version
+		installed_at: time.now().strftime('%Y-%m-%d %H:%M:%S') // current date and time
+	}
+	version_list << new_entry
+
+	// Write the updated version list back to the file
+	version_list_content := json.encode(version_list)
+	os.write_file(version_list_path, version_list_content) or {
+		eprintln('Failed to write version list: ${err}')
+		return
+	}
 }
 
 // Function to print a message with a specific color
