@@ -77,11 +77,45 @@ fn main() {
 					list_installed_versions()
 				}
 			},
-			// Add other commands here
+			cli.Command{
+				name: 'rollback'
+				execute: fn (cmd cli.Command) ! {
+					if cmd.args.len < 1 {
+						eprintln('Please specify a version to rollback to.')
+						return
+					}
+					version := cmd.args[0]
+					rollback_to_version(version)
+				}
+			},
 		]
 	}
 	app.setup()
 	app.parse(os.args)
+}
+
+fn rollback_to_version(version string) {
+	// TODO: Check if the version exists in the installed versions
+	// If not, print an error and return
+
+	// TODO: we need to modify the installed version
+	// Remove the current symbolic link
+	current_link := home_dire + '/.local/share/nv_manager/current'
+	os.rm(current_link) or {
+		eprintln('Failed to remove current symbolic link: ${err}')
+		return
+	}
+
+	// Create a new symbolic link pointing to the specified version
+	new_link := home_dire + '/.local/share/nv_manager/nightly/' + version
+	os.symlink(new_link, current_link) or {
+		eprintln('Failed to create new symbolic link: ${err}')
+		return
+	}
+
+	// TODO: Update the PATH environment variable to include the new version
+
+	println('Rolled back to version ${version} successfully.')
 }
 
 // TODO: move a lot of these helper functions to different file
