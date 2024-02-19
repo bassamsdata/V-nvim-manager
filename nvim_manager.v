@@ -118,6 +118,21 @@ fn print_item_list(prefix string, items []string) {
 		println('${prefix} ${item}')
 	}
 }
+// TODO: delete this one
+fn get_current_version(symlink_path string) string {
+	// Read the symlink to get the path of the active Neovim binary
+	real_path := os.execute('readlink ${symlink_path}')
+	// Extract the version from the path
+	components := real_path.output.trim('\n')
+	component1, component2 := extract_version_from_path(components)
+	println('component1: ${component1}, component2: ${component2}')
+	// Assume the version is the third last segment of the path
+	if component1 != '' {
+		return component2
+	}
+	return ''
+}
+
 fn use_version(version string) {
 	symlink_path := '/usr/local/bin/nvim'
 	mut neovim_binary := ''
