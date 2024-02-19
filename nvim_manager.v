@@ -119,6 +119,36 @@ fn print_item_list(prefix string, items []string) {
 	}
 }
 
+fn list_installed_versions() {
+	// Define the directories where the versions are stored
+	nightly_dir := target_nightly + '/nvim-macos/bin/nvim'
+	stable_dir := target_dir_stable
+	symlink_path := '/usr/local/bin/nvim'
+
+	// Initialize arrays to hold the versions
+	mut nightly_versions := []string{}
+	mut stable_versions := []string{}
+
+	// Scan the nightly directory
+	if os.exists(nightly_dir) {
+		entries := os.ls(nightly_dir) or { [] }
+		for entry in entries {
+			if os.is_dir(os.join_path(nightly_dir, entry)) {
+				nightly_versions << entry
+			}
+		}
+	}
+
+	// Scan the stable directory
+	if os.exists(stable_dir) {
+		entries := os.ls(stable_dir) or { [] }
+		for entry in entries {
+			if os.is_dir(os.join_path(stable_dir, entry)) {
+				stable_versions << entry
+			}
+		}
+	}
+
 	// Print the header
 	println('Installed Versions:')
 	println('---------------------')
