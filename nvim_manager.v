@@ -3,6 +3,7 @@ import os
 import json
 import cli
 import term
+import time
 
 // TODO: organize all these commands
 const home_dire = os.home_dir()
@@ -15,6 +16,11 @@ const tags_url = 'https://api.github.com/repos/neovim/neovim/tags'
 
 struct Tag {
 	name string
+}
+
+struct VersionEntry {
+	version      string
+	installed_at string
 }
 
 fn main() {
@@ -97,25 +103,54 @@ fn main() {
 
 // Rollback to version --------------------------------------------------------
 fn rollback_to_version(version string) {
-	// TODO: Check if the version exists in the installed versions
-	// If not, print an error and return
+	// Path to the JSON file containing the list of installed versions
+	version_list_path := home_dire + '/.local/share/nv_manager/version_list.json'
+	mut version_list := []VersionEntry{}
 
-	// TODO: we need to modify the installed version
-	// Remove the current symbolic link
+	// Read the version list from the JSON file
+	version_list_content := os.read_file(version_list_path) or {
+		eprintln('Failed to read version list: ${err}')
+		return
+	}
+	version_list = json.decode([]VersionEntry, version_list_content) or {
+		eprintln('Failed to decode version list: ${err}')
+		return
+	}
+
+	// Check if the requested version is in the list
+	mut target_version_entry := VersionEntry{}
+	for entry in version_list {
+		if entry.version == version {
+			target_version_entry = entry
+			break
+		}
+	}
+	if target_version_entry.version == '' {
+		eprintln('The requested version is not installed.')
+		return
+	}
+
+	// Path to the current active Neovim version
 	current_link := home_dire + '/.local/share/nv_manager/current'
+
+	// Remove the current symbolic link
 	os.rm(current_link) or {
 		eprintln('Failed to remove current symbolic link: ${err}')
 		return
 	}
 
-	// Create a new symbolic link pointing to the specified version
-	new_link := home_dire + '/.local/share/nv_manager/nightly/' + version
-	os.symlink(new_link, current_link) or {
+	// Path to the version we want to rollback to
+	target_version_path := target_dir_nightly + version
+
+	// Create a new symbolic link pointing to the target version
+	os.symlink(target_version_path, current_link) or {
 		eprintln('Failed to create new symbolic link: ${err}')
 		return
 	}
 
-	// TODO: Update the PATH environment variable to include the new version
+	// Update the PATH environment variable to include the new version
+	// This step might require shell-specific commands and may not be portable
+	// Here, we're assuming that the new version is already in the PATH
 
 	println('Rolled back to version ${version} successfully.')
 }
