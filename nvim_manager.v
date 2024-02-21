@@ -199,6 +199,7 @@ fn update_version_list(version string) {
 	}
 }
 
+// TODO: send it to the helper file
 // Function to print a message with a specific color
 fn print_colored_message(color_function fn (string) string, message string) {
 	colored_message := color_function(message)
@@ -257,6 +258,7 @@ fn list_installed_versions() {
 		}
 	}
 
+	// TODO: it should be a better way to style this
 	// Print the header
 	println('Installed Versions:')
 	println('---------------------')
@@ -488,15 +490,13 @@ fn install_nightly() {
 		eprintln('Failed to extract Neovim: ${result.output}')
 		return
 	}
+	update_version_list('nightly')
 
-  // TODO: add rollback feature and remove this to if or different command
 	// Remove the downloaded archive
 	os.rm(file_path) or {
 		eprintln('Failed to remove the Neovim archive')
 		return
 	}
-
-	use_version('nightly')
 
 	println('Neovim nightly installed successfully!')
 }
