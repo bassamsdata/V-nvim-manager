@@ -204,49 +204,6 @@ fn rollback_to_version(unique_number int) {
 	println('Rolled back to Neovim version ${version_to_rollback.unique_number}')
 }
 
-// FIX: this function is not working
-// 1. read the version list and create one if it doesn't exist
-// 2. check if the version is already in the list
-// 3. if it's not in the list, add it
-// 4. write the new version list to the JSON file
-fn update_version_list(version string) {
-	version_list_path := home_dire + '/.local/share/nv_manager/version_list.json'
-	mut version_list := []VersionEntry{}
-
-	// Read the existing version list if it exists
-	if os.exists(version_list_path) {
-		version_list_content := os.read_file(version_list_path) or {
-			eprintln('Failed to read version list: ${err}')
-			return
-		}
-		version_list = json.decode([]VersionEntry, version_list_content) or {
-			eprintln('Failed to decode version list: ${err}')
-			return
-		}
-	}
-
-	// Check if the version is already in the list
-	for entry in version_list {
-		if entry.version == version {
-			// Version is already in the list, so we don't need to add it again
-			return
-		}
-	}
-
-	// Add the new version to the list
-	new_entry := VersionEntry{
-		version: version
-		installed_at: time.now().strftime('%Y-%m-%d %H:%M:%S') // current date and time
-	}
-	version_list << new_entry
-
-	// Write the updated version list back to the file
-	version_list_content := json.encode(version_list)
-	os.write_file(version_list_path, version_list_content) or {
-		eprintln('Failed to write version list: ${err}')
-		return
-	}
-}
 
 // TODO: send it to the helper file
 // Function to print a message with a specific color
