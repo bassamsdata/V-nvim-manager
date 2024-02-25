@@ -163,57 +163,45 @@ fn setup() {
 }
 
 // Rollback to version --------------------------------------------------------
-fn rollback_to_version(version string) {
-	// Path to the JSON file containing the list of installed versions
-	version_list_path := home_dire + '/.local/share/nv_manager/version_list.json'
-	mut version_list := []VersionEntry{}
-
-	// Read the version list from the JSON file
-	version_list_content := os.read_file(version_list_path) or {
-		eprintln('Failed to read version list: ${err}')
+// TEST: I still need to test this - this is the first time I'm using this method
+fn rollback_to_version(unique_number int) {
+	// Read the list of installed versions
+	version_file_path := target_nightly + 'versions_info.json'
+	version_file_content := os.read_file(version_file_path) or {
+		eprintln('Failed to read version file: ${err}')
 		return
 	}
-	version_list = json.decode([]VersionEntry, version_list_content) or {
-		eprintln('Failed to decode version list: ${err}')
+	installed_versions := json.decode([]VersionInfo, version_file_content) or {
+		eprintln('Failed to parse version file JSON: ${err}')
 		return
 	}
 
-	// Check if the requested version is in the list
-	mut target_version_entry := VersionEntry{}
-	for entry in version_list {
-		if entry.version == version {
-			target_version_entry = entry
+	// Find the version with the specified unique number
+	mut version_to_rollback := VersionInfo{}
+	for version in installed_versions {
+		if version.unique_number == unique_number {
+			version_to_rollback = version
 			break
 		}
 	}
-	if target_version_entry.version == '' {
-		eprintln('The requested version is not installed.')
+
+	// If no version was found, print an error and return
+	if version_to_rollback.unique_number == 0 {
+		eprintln('Version with unique number ${unique_number} not found.')
 		return
 	}
 
-	// Path to the current active Neovim version
-	current_link := home_dire + '/.local/share/nv_manager/current'
-
-	// Remove the current symbolic link
-	os.rm(current_link) or {
-		eprintln('Failed to remove current symbolic link: ${err}')
+	// Activate the specified version
+	symlink_path := '/usr/local/bin/nvim' // TODO: ensure the path is correct
+	// FIX: modify this to use the correct path of created_date
+	// created_at := version_to_rollback.created_at.custom_format('%Y-%m-%d')
+	version_executable := target_nightly + version_to_rollback.node_id + '/nvim'
+	os.symlink(version_executable, symlink_path) or {
+		eprintln('Failed to update symlink: ${err}')
 		return
 	}
 
-	// Path to the version we want to rollback to
-	target_version_path := target_dir_nightly + version
-
-	// Create a new symbolic link pointing to the target version
-	os.symlink(target_version_path, current_link) or {
-		eprintln('Failed to create new symbolic link: ${err}')
-		return
-	}
-
-	// Update the PATH environment variable to include the new version
-	// This step might require shell-specific commands and may not be portable
-	// Here, we're assuming that the new version is already in the PATH
-
-	println('Rolled back to version ${version} successfully.')
+	println('Rolled back to Neovim version ${version_to_rollback.unique_number}')
 }
 
 // FIX: this function is not working
