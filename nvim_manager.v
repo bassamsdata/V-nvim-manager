@@ -143,6 +143,25 @@ fn main() {
 	app.parse(os.args)
 }
 
+fn setup() {
+	version_file_path := target_nightly + 'versions_info.json'
+	if os.exists(version_file_path) {
+		println('The versions_info.json file already exists.')
+		return
+	}
+
+	// Define the initial content for the versions_info.json file
+	initial_content := '[]' // Start with an empty JSON array
+
+	// Write the initial content to the file
+	os.write_file(version_file_path, initial_content) or {
+		eprintln('Failed to create versions_info.json file: ${err}')
+		return
+	}
+
+	println('The versions_info.json file has been created successfully.')
+}
+
 // Rollback to version --------------------------------------------------------
 fn rollback_to_version(version string) {
 	// Path to the JSON file containing the list of installed versions
