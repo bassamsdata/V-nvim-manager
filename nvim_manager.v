@@ -204,7 +204,6 @@ fn rollback_to_version(unique_number int) {
 	println('Rolled back to Neovim version ${version_to_rollback.unique_number}')
 }
 
-
 // TODO: send it to the helper file
 // Function to print a message with a specific color
 fn print_colored_message(color_function fn (string) string, message string) {
@@ -312,6 +311,7 @@ fn get_current_version(symlink_path string) string {
 	return ''
 }
 
+// FIX: this is not working when using nightly- need refactor
 fn use_version(version string) {
 	symlink_path := '/usr/local/bin/nvim'
 	mut neovim_binary := ''
@@ -378,6 +378,7 @@ fn check_current_version() string {
 	return minor_version
 }
 
+// Del: this is not a good implementation
 fn extract_version_from_path(path string) (string, string) {
 	components := path.split('/')
 	if components.len > 6 {
@@ -386,6 +387,7 @@ fn extract_version_from_path(path string) (string, string) {
 	return '', ''
 }
 
+// TODO: need enhancements to let the user specify the version
 fn list_remote_versions() {
 	resp := http.get(tags_url) or {
 		eprintln('Failed to fetch Neovim versions: ${err}')
@@ -407,6 +409,7 @@ fn list_remote_versions() {
 	}
 }
 
+// NOTE: this is almost a prod-ready function
 fn install_specific_stable(version string) {
 	// TODO: insure this is the correct way of dirs
 	stable_url := stable_base_url + version + '/nvim-macos.tar.gz'
@@ -453,6 +456,7 @@ fn install_specific_stable(version string) {
 	println('Neovim version ${version} installed successfully!')
 }
 
+// FIX: this is a pain with tghe rollback feature - needs refactor
 fn update_nightly() {
 	nightly_path := target_nightly + 'nvim-macos'
 	if os.exists(nightly_path) {
@@ -467,6 +471,7 @@ fn update_nightly() {
 	println('and version updated.')
 }
 
+// FIX: this is a pain with tghe rollback feature - needs refactor
 fn install_nightly() {
 	// Create the target directory if it does not exist
 	params := os.MkdirParams{
