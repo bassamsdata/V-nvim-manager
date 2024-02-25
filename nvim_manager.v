@@ -13,14 +13,18 @@ const stable_base_url = 'https://github.com/neovim/neovim/releases/download/v'
 const target_dir_nightly = home_dire + '/.local/share/nv_manager/nightly/'
 const target_dir_stable = home_dire + '/.local/share/nv_manager/stable/'
 const tags_url = 'https://api.github.com/repos/neovim/neovim/tags'
+const tags_nightly_url = 'https://api.github.com/repos/neovim/neovim/releases/tags/nightly'
 
 struct Tag {
 	name string
 }
 
-struct VersionEntry {
-	version      string
-	installed_at string
+struct VersionInfo {
+mut:
+	node_id       string
+	created_at    string
+	directory     string
+	unique_number int
 }
 
 fn main() {
@@ -34,6 +38,7 @@ fn main() {
 		commands: [
 			cli.Command{
 				name: 'install'
+				description: 'install the latest nightly or a specific version'
 				execute: fn (cmd cli.Command) ! {
 					if cmd.args.len < 1 {
 						eprintln('Please specify a version to install.')
@@ -49,18 +54,21 @@ fn main() {
 			},
 			cli.Command{
 				name: 'update'
+				description: 'update the local nightly version'
 				execute: fn (cmd cli.Command) ! {
 					update_nightly()
 				}
 			},
 			cli.Command{
 				name: 'list_remote'
+				description: 'list the last 7 stable remote versions'
 				execute: fn (cmd cli.Command) ! {
 					list_remote_versions()
 				}
 			},
 			cli.Command{
 				name: 'use'
+				description: 'use a specific version e.g. `nvimv use 0.9.5` or `nvimv use nightly`'
 				execute: fn (cmd cli.Command) ! {
 					if cmd.args.len < 1 {
 						eprintln('Please specify a version to use.')
@@ -70,29 +78,63 @@ fn main() {
 					use_version(version)
 				}
 			},
-			// TODO: combine both command in one
+			cli.Command{
+				name: 'ls'
+				description: 'list versions locally `nvimv ls local` or remotely `nvimv ls remote`'
+				execute: fn (cmd cli.Command) ! {
+					if cmd.args.len == 0 {
+						eg := term.bright_green(' e.g. nvimv ls local')
+						println('please choose either local or remote.${eg}')
+						return
+					}
+					for arg in cmd.args {
+						if arg == 'local' {
+							// FIX: this is the wrong one, need to check
+							print_current_version()
+						} else if arg == 'remote' {
+							list_installed_versions()
+						} else {
+							println('Unknown argument: ${arg}')
+						}
+					}
+				}
+			},
+			cli.Command{
+				name: 'setup'
+				description: 'Setup the neovim manager directories'
+				execute: fn (cmd cli.Command) ! {
+					setup()
+				}
+			},
+			cli.Command{
+				name: 'rollback'
+				description: 'Rollback to a specific version - only works on nightly versions e.g. `nvimv rollback 1` to rollback to most previous one'
+				execute: fn (cmd cli.Command) ! {
+					if cmd.args.len < 1 {
+						eprintln('Please specify a version to rollback to.')
+						return
+					}
+					version := cmd.args[0].int()
+					rollback_to_version(version)
+				}
+			},
 			cli.Command{
 				name: 'check'
+				description: "Check the current version that's being used"
 				execute: fn (cmd cli.Command) ! {
 					print_current_version()
 				}
 			},
 			cli.Command{
-				name: 'list_installed'
+				name: 'help'
+				description: 'Show available commands and their descriptions'
 				execute: fn (cmd cli.Command) ! {
-					list_installed_versions()
-				}
-			},
-			cli.Command{
-				name: 'rollback'
-				execute: fn (cmd cli.Command) ! {
-					if cmd.args.len < 1 {
-						// TODO: need to bulid something like roollback 1 ro 2 ro 3...
-						eprintln('Please specify a version to rollback to.')
-						return
+					for command in cmd.parent.commands {
+						cyan_command := term.bold(term.cyan(command.name))
+						println('${cyan_command}:')
+						println('\t${command.description}')
+						println('')
 					}
-					version := cmd.args[0]
-					rollback_to_version(version)
 				}
 			},
 		]
@@ -346,6 +388,7 @@ fn print_current_version() {
 	println('Currently using Neovim version: ${version} ')
 }
 
+// BUG: doesn't work if it is nightly
 fn check_current_version() string {
 	symlink_path := '/usr/local/bin/nvim'
 	if !os.exists(symlink_path) || !os.is_link(symlink_path) {
