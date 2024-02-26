@@ -108,6 +108,7 @@ fn main() {
 				}
 			},
 			cli.Command{
+				// TODO: add `rollback ls` command to list the versions that have been rolled back to
 				name: 'rollback'
 				description: 'Rollback to a specific version - only works on nightly versions e.g. `nvimv rollback 1` to rollback to most previous one'
 				execute: fn (cmd cli.Command) ! {
@@ -165,7 +166,9 @@ fn setup() {
 }
 
 // Rollback to version --------------------------------------------------------
-// TEST: I still need to test this - this is the first time I'm using this method
+// FIX: if we do rollback, how to use the updated version as well
+// TEST: 2 I think `vnvim use nightly` will should use the latest version.
+// TEST: no3
 fn rollback_to_version(unique_number int) {
 	// Read the list of installed versions
 	version_file_path := target_nightly + 'versions_info.json'
@@ -200,7 +203,16 @@ fn rollback_to_version(unique_number int) {
 		return
 	}
 	formatted_date := date_time_dir.custom_format('YYYY-MM-DD')
-	version_executable := target_nightly + formatted_date + '/nvim'
+	version_executable := target_nightly + formatted_date + '/nvim-macos/bin/nvim'
+	println(version_executable)
+
+	// Remove the existing symlink
+	if os.exists(symlink_path) {
+		os.rm(symlink_path) or {
+			eprintln('Failed to remove existing symlink: ${err}')
+			return
+		}
+	}
 	os.symlink(version_executable, symlink_path) or {
 		eprintln('Failed to update symlink: ${err}')
 		return
@@ -238,7 +250,10 @@ fn print_item_list(prefix string, items []string) {
 	}
 }
 
-// TODO: list how mnay nightly versions are installed and stables as well
+// TODO: refactor this completely
+// - should output the current version
+//   - if it's a nightly version, print the nightly version number and create_at
+// - should be in a list or table
 fn list_installed_versions() {
 	// Define the directories where the versions are stored
 	nightly_dir := target_nightly + '/nvim-macos/bin/nvim'
