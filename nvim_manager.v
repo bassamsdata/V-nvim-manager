@@ -368,7 +368,7 @@ fn use_version(version string) {
 
 fn print_current_version() {
 	version := check_current_version()
-	println('Currently using Neovim version: ${version} ')
+	println('${version} ')
 }
 
 fn check_current_version() string {
