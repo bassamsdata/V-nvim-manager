@@ -54,16 +54,9 @@ fn main() {
 			},
 			cli.Command{
 				name: 'update'
-				description: 'update the local nightly version'
+				description: 'update the local ' + term.bold(term.cyan('nightly')) + ' version'
 				execute: fn (cmd cli.Command) ! {
 					update_nightly()
-				}
-			},
-			cli.Command{
-				name: 'list_remote'
-				description: 'list the last 7 stable remote versions'
-				execute: fn (cmd cli.Command) ! {
-					list_remote_versions()
 				}
 			},
 			cli.Command{
@@ -71,7 +64,9 @@ fn main() {
 				description: 'use a specific version e.g. `nvimv use 0.9.5` or `nvimv use nightly`'
 				execute: fn (cmd cli.Command) ! {
 					if cmd.args.len < 1 {
-						eprintln('Please specify a version to use.')
+						eg1 := term.bold(term.bright_cyan('nvimv use nightly'))
+						eg2 := term.bold(term.bright_cyan(' e.g. nvimv use 0.9.5'))
+						eprintln('Please specify a version to use. e.g. ${eg1} or ${eg2}')
 						return
 					}
 					version := cmd.args[0]
@@ -80,19 +75,21 @@ fn main() {
 			},
 			cli.Command{
 				name: 'ls'
-				description: 'list versions locally `nvimv ls local` or remotely `nvimv ls remote`'
+				description: 'list versions locally ' +
+					term.bold(term.bright_cyan('nvimv ls local')) + ' or remotely ' +
+					term.bold(term.bright_cyan('nvimv ls remote'))
 				execute: fn (cmd cli.Command) ! {
 					if cmd.args.len == 0 {
-						eg := term.bright_green(' e.g. nvimv ls local')
-						println('please choose either local or remote.${eg}')
+						eg1 := term.bold(term.bright_cyan('nvimv ls local'))
+						eg2 := term.bold(term.bright_cyan('nvimv ls remote'))
+						println('please choose either local or remote. e.g. ${eg1} or ${eg2}')
 						return
 					}
 					for arg in cmd.args {
 						if arg == 'local' {
-							// FIX: this is the wrong one, need to check
-							print_current_version()
-						} else if arg == 'remote' {
 							list_installed_versions()
+						} else if arg == 'remote' {
+							list_remote_versions()
 						} else {
 							println('Unknown argument: ${arg}')
 						}
@@ -101,7 +98,7 @@ fn main() {
 			},
 			cli.Command{
 				name: 'setup'
-				description: 'Setup the neovim manager directories'
+				description: 'Setup the neovim version manager directories'
 				execute: fn (cmd cli.Command) ! {
 					setup()
 				}
@@ -110,8 +107,9 @@ fn main() {
 				name: 'rollback'
 				description: 'Rollback to a specific version - only works on nightly versions e.g. `nvimv rollback 1` to rollback to most previous one'
 				execute: fn (cmd cli.Command) ! {
+					eg := term.bright_cyan('nvimv rollback 1')
 					if cmd.args.len < 1 {
-						eprintln('Please specify a version to rollback to.')
+						eprintln('Please specify a version to rollback to. e.g. ${eg} to rollback to the previous version')
 						return
 					}
 					version := cmd.args[0].int()
@@ -266,7 +264,7 @@ fn list_installed_versions() {
 		}
 	}
 
-	// TODO: it should be a better way to style this
+	// FIX: this is a total mess because of the output format
 	// Print the header
 	println('Installed Versions:')
 	println('---------------------')
@@ -299,7 +297,7 @@ fn list_installed_versions() {
 	println('---------------------')
 }
 
-// TODO: delete this one
+// TODO: delete this one when I fix the list installed versions function
 fn get_current_version(symlink_path string) string {
 	// Read the symlink to get the path of the active Neovim binary
 	real_path := os.execute('readlink ${symlink_path}')
@@ -343,7 +341,7 @@ fn use_version(version string) {
 	} else {
 		neovim_binary = target_dir_stable + version + '/nvim-macos/bin/nvim'
 	}
-	// Del: this print
+	// Del: this print - when the test no2 is done
 	println(neovim_binary)
 	// Check if the specified version's binary exists
 	if !os.exists(neovim_binary) {
