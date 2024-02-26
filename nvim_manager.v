@@ -27,6 +27,7 @@ mut:
 	unique_number int
 }
 
+// TODO: oops I haven't thought about uninstall yet
 fn main() {
 	mut app := cli.Command{
 		name: 'nvimv'
@@ -41,7 +42,9 @@ fn main() {
 				description: 'install the latest nightly or a specific version'
 				execute: fn (cmd cli.Command) ! {
 					if cmd.args.len < 1 {
-						eprintln('Please specify a version to install.')
+						eg1 := term.bold(term.bright_cyan('nvimv install nightly'))
+						eg2 := term.bold(term.bright_cyan('nvimv install 0.9.5'))
+						eprintln('Please specify a version to install. e.g. ${eg1} or ${eg2}')
 						return
 					}
 					version := cmd.args[0]
@@ -52,6 +55,7 @@ fn main() {
 					}
 				}
 			},
+			// TODO: make update for stable versions
 			cli.Command{
 				name: 'update'
 				description: 'update the local ' + term.bold(term.cyan('nightly')) + ' version'
@@ -107,7 +111,7 @@ fn main() {
 				name: 'rollback'
 				description: 'Rollback to a specific version - only works on nightly versions e.g. `nvimv rollback 1` to rollback to most previous one'
 				execute: fn (cmd cli.Command) ! {
-					eg := term.bright_cyan('nvimv rollback 1')
+					eg := term.bold(term.bright_cyan('nvimv rollback 1'))
 					if cmd.args.len < 1 {
 						eprintln('Please specify a version to rollback to. e.g. ${eg} to rollback to the previous version')
 						return
@@ -234,6 +238,7 @@ fn print_item_list(prefix string, items []string) {
 	}
 }
 
+// TODO: list how mnay nightly versions are installed and stables as well
 fn list_installed_versions() {
 	// Define the directories where the versions are stored
 	nightly_dir := target_nightly + '/nvim-macos/bin/nvim'
@@ -343,10 +348,11 @@ fn use_version(version string) {
 	}
 	// Del: this print - when the test no2 is done
 	println(neovim_binary)
+	msg := term.bold(term.cyan('${version}'))
 	// Check if the specified version's binary exists
 	if !os.exists(neovim_binary) {
-		eprintln('The specified version (${version}) is not installed.')
-		eprintln('Please install the version using "nvimv install ${version}".')
+		eprintln('The specified version (${msg}) is not installed.')
+		eprintln('Please install the version using "nvimv install ${msg}".')
 		return
 	}
 
@@ -363,8 +369,7 @@ fn use_version(version string) {
 		eprintln('Failed to create symlink: ${err}')
 		return
 	}
-
-	println('Using Neovim version ${version} now.')
+	println('Using Neovim version ${msg} now.')
 }
 
 fn print_current_version() {
@@ -487,8 +492,8 @@ fn install_specific_stable(version string) {
 	}
 
 	use_version(version)
-
-	println('Neovim version ${version} installed successfully!')
+	msg := term.bold(term.cyan('${version}'))
+	println('Neovim version ${msg} installed successfully!')
 }
 
 fn update_nightly() {
@@ -581,8 +586,8 @@ fn update_nightly() {
 		return
 	}
 	use_version('nightly')
-
-	println('Neovim nightly updated to the latest version.')
+	msg := term.bold(term.cyan('nightly'))
+	println('Neovim ${msg} updated to the latest version.')
 }
 
 fn install_nightly() {
@@ -674,6 +679,6 @@ fn install_nightly() {
 		return
 	}
 	use_version('nightly')
-
-	println('Neovim nightly installed successfully!')
+	msg := term.bold(term.cyan('nightly'))
+	println('Neovim ${msg} installed successfully!')
 }
