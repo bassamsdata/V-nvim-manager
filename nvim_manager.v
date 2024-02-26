@@ -192,10 +192,13 @@ fn rollback_to_version(unique_number int) {
 	}
 
 	// Activate the specified version
-	symlink_path := '/usr/local/bin/nvim' // TODO: ensure the path is correct
-	// FIX: modify this to use the correct path of created_date
-	// created_at := version_to_rollback.created_at.custom_format('%Y-%m-%d')
-	version_executable := target_nightly + version_to_rollback.node_id + '/nvim'
+	symlink_path := '/usr/local/bin/nvim'
+	date_time_dir := time.parse_rfc3339(version_to_rollback.created_at) or {
+		eprintln('Error parsing date string: ${err.msg()}')
+		return
+	}
+	formatted_date := date_time_dir.custom_format('YYYY-MM-DD')
+	version_executable := target_nightly + formatted_date + '/nvim'
 	os.symlink(version_executable, symlink_path) or {
 		eprintln('Failed to update symlink: ${err}')
 		return
