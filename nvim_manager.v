@@ -471,44 +471,96 @@ fn update_nightly() {
 	println('and version updated.')
 }
 
-// FIX: this is a pain with tghe rollback feature - needs refactor
 fn install_nightly() {
+	// Fetch the latest nightly release information from GitHub API
+	resp := http.get(tags_nightly_url) or {
+		eprintln('Failed to fetch latest nightly release information: ${err}')
+		return
+	}
+	// FIX: change this to use object instead of array like update nightly
+	mut release_info := []VersionInfo{}
+
+	// Decode the JSON response into a struct
+	release_info = json.decode([]VersionInfo, resp.body) or {
+		eprintln('Failed to parse release information JSON, error: ${err}')
+		return
+	}
+
+	// Extract the unique identifier and timestamp
+	node_id := release_info[0].node_id
+	created_at := release_info[0].created_at
+
 	// Create the target directory if it does not exist
 	params := os.MkdirParams{
 		mode: 0o755 // Permissions for the directory
 	}
-	os.mkdir_all(target_nightly, params) or {
-		eprintln('Failed to create target directory: ${err}')
+
+	// Create a unique directory for the new version
+	date_time_dir := time.parse_rfc3339(created_at) or {
+		eprintln('Error parsing date string: ${err.msg()}')
+		return
+	}
+	formatted_date := date_time_dir.custom_format('YYYY-MM-DD')
+	version_dir := target_nightly + formatted_date + '/'
+	os.mkdir_all(version_dir, params) or {
+		eprintln('Failed to create version directory: ${err}')
 		return
 	}
 
 	// Download the Neovim archive
-	resp := http.get(neovim_url) or {
+	fileresp := http.get(neovim_url) or {
 		eprintln('Failed to download Neovim: ${err}')
 		return
 	}
 
-	// Save the downloaded file to the target directory
-	file_path := target_nightly + 'nvim-macos.tar.gz'
-	os.write_file(file_path, resp.body) or {
+	// Save the downloaded file to the version directory
+	file_path := version_dir + 'nvim-macos.tar.gz'
+	os.write_file(file_path, fileresp.body) or {
 		eprintln('Failed to save Neovim archive: ${err}')
 		return
 	}
 
 	// Extract the archive
-	extract_command := 'tar xzvf ${file_path} -C ${target_nightly}'
+	extract_command := 'tar xzvf ${file_path} -C ${version_dir}'
 	result := os.execute(extract_command)
 	if result.exit_code != 0 {
 		eprintln('Failed to extract Neovim: ${result.output}')
 		return
 	}
-	update_version_list('nightly')
 
 	// Remove the downloaded archive
 	os.rm(file_path) or {
 		eprintln('Failed to remove the Neovim archive')
 		return
 	}
+
+	// After extracting the new version, read the existing versions_info.json
+	version_file_path := target_nightly + 'versions_info.json'
+	mut existing_versions := json.decode([]VersionInfo, os.read_file(version_file_path) or {
+		eprintln('Failed to read version file: ${err}')
+		return
+	}) or {
+		eprintln('Failed to parse version file JSON: ${err}')
+		return
+	}
+
+	// Create a new VersionInfo for the current nightly version
+	new_version := VersionInfo{
+		node_id: node_id
+		created_at: created_at
+		directory: version_dir
+		unique_number: existing_versions.len + 1 // Assign a unique number based on the current count
+	}
+	// Append the new version to the list
+	existing_versions << new_version
+
+	// Write the updated list back to the file
+	version_info_json := json.encode(existing_versions)
+	os.write_file(version_file_path, version_info_json) or {
+		eprintln('Failed to update version file: ${err}')
+		return
+	}
+	use_version('nightly')
 
 	println('Neovim nightly installed successfully!')
 }
