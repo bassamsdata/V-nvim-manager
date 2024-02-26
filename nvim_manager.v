@@ -311,18 +311,37 @@ fn get_current_version(symlink_path string) string {
 	return ''
 }
 
-// FIX: this is not working when using nightly- need refactor
+// TEST: no.2 I need to test this nightly thing
 fn use_version(version string) {
 	symlink_path := '/usr/local/bin/nvim'
 	mut neovim_binary := ''
 
 	// Determine the binary path based on the version
 	if version == 'nightly' {
-		neovim_binary = target_nightly + '/nvim-macos/bin/nvim'
+		// List all entries in the target nightly directory
+		entries := os.ls(target_nightly) or { [] }
+
+		// Filter to include only directories
+		mut dirs := []string{}
+		for entry in entries {
+			if os.is_dir(os.join_path(target_nightly, entry)) {
+				dirs << entry
+			}
+		}
+
+		// Sort directories by date (assuming names are in YYYY-MM-DD format)
+		dirs.sort()
+
+		// Select the most recent directory
+		latest_dir := dirs.last()
+
+		// Construct the path to the Neovim binary
+		neovim_binary = target_nightly + latest_dir + '/nvim-macos/bin/nvim'
 	} else {
 		neovim_binary = target_dir_stable + version + '/nvim-macos/bin/nvim'
 	}
-
+	// Del: this print
+	println(neovim_binary)
 	// Check if the specified version's binary exists
 	if !os.exists(neovim_binary) {
 		eprintln('The specified version (${version}) is not installed.')
