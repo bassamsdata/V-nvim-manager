@@ -590,18 +590,17 @@ fn install_nightly() {
 		eprintln('Failed to fetch latest nightly release information: ${err}')
 		return
 	}
-	// FIX: change this to use object instead of array like update nightly
-	mut release_info := []VersionInfo{}
+	mut release_info := VersionInfo{}
 
 	// Decode the JSON response into a struct
-	release_info = json.decode([]VersionInfo, resp.body) or {
+	release_info = json.decode(VersionInfo, resp.body) or {
 		eprintln('Failed to parse release information JSON, error: ${err}')
 		return
 	}
 
 	// Extract the unique identifier and timestamp
-	node_id := release_info[0].node_id
-	created_at := release_info[0].created_at
+	node_id := release_info.node_id
+	created_at := release_info.created_at
 
 	// Create the target directory if it does not exist
 	params := os.MkdirParams{
