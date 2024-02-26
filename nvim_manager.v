@@ -371,7 +371,6 @@ fn print_current_version() {
 	println('Currently using Neovim version: ${version} ')
 }
 
-// BUG: doesn't work if it is nightly
 fn check_current_version() string {
 	symlink_path := '/usr/local/bin/nvim'
 	if !os.exists(symlink_path) || !os.is_link(symlink_path) {
@@ -389,12 +388,28 @@ fn check_current_version() string {
 	// Parse the output to find the version
 	// This assumes the symlink output includes the version in the path
 	symlink_target := result.output.trim('\n') // Correct usage of trim_space
-	major_version, minor_version := extract_version_from_path(symlink_target)
-	if major_version == '' {
-		eprintln('Failed to parse version from symlink target.')
-		return ''
+	// Check if the path contains "nightly" or "stable"
+	if symlink_target.contains('nightly') {
+		// Extract the date from the path
+		parts := symlink_target.split('/')
+		for part in parts {
+			if part.starts_with('20') { // for sure dates start with '20'
+				return 'You are using the nightly version created at ' + term.bold(term.cyan(part))
+			}
+		}
+	} else if symlink_target.contains('stable') {
+		// Extract the version number from the path
+		parts := symlink_target.split('/')
+		for part in parts {
+			// I think this is better than extract_version_from_path function
+			if part.starts_with('0.') { // all neovim versions start with '0.'
+				return 'You are using the stable version ' + term.bold(term.cyan(part))
+			}
+		}
 	}
-	return minor_version
+
+	eprintln('Failed to parse version from symlink target.')
+	return ''
 }
 
 // Del: this is not a good implementation
