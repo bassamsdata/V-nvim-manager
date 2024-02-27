@@ -535,7 +535,24 @@ fn update_nightly() {
 	// Extract the unique identifier and timestamp
 	node_id := release_info.node_id
 	created_at := release_info.created_at
-	// FIX: add the check logix here
+
+	// Read the existing versions_info.json
+	mut existing_versions := json.decode([]VersionInfo, os.read_file(version_file_path) or {
+		eprintln('Failed to read version file: ${err}')
+		return
+	}) or {
+		eprintln('Failed to parse version file JSON: ${err}')
+		return
+	}
+
+	// Check if the latest nightly version is already installed
+	for version in existing_versions {
+		if version.node_id == node_id {
+			mut msg := term.bold(term.cyan('vnvim use nightly'))
+			println('The latest nightly version is already installed. please use the command ${msg} ')
+			return
+		}
+	}
 
 	// Create the target directory for the new version
 	date_time_dir := time.parse_rfc3339(created_at) or {
@@ -573,15 +590,6 @@ fn update_nightly() {
 	// Remove the downloaded archive
 	os.rm(file_path) or {
 		eprintln('Failed to remove the Neovim archive')
-		return
-	}
-
-	// Read the existing versions_info.json
-	mut existing_versions := json.decode([]VersionInfo, os.read_file(version_file_path) or {
-		eprintln('Failed to read version file: ${err}')
-		return
-	}) or {
-		eprintln('Failed to parse version file JSON: ${err}')
 		return
 	}
 
