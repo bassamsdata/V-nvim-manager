@@ -166,9 +166,7 @@ fn setup() {
 }
 
 // Rollback to version --------------------------------------------------------
-// FIX: if we do rollback, how to use the updated version as well
-// TEST: 2 I think `vnvim use nightly` will should use the latest version.
-// TEST: no3
+// NOTE: to revert back to latest installed nightly version, use `nvimv use nightly`
 fn rollback_to_version(unique_number int) {
 	// Read the list of installed versions
 	version_file_path := target_nightly + 'versions_info.json'
@@ -218,7 +216,11 @@ fn rollback_to_version(unique_number int) {
 		return
 	}
 
-	println('Rolled back to Neovim version ${version_to_rollback.unique_number}')
+	msg_uniqe := term.bold(term.bright_cyan('${version_to_rollback.unique_number}'))
+	msg_created := term.bold(term.bright_cyan('${version_to_rollback.created_at}'))
+	msg_latest := term.bold(term.bright_cyan('vnvim use nightly'))
+	println('Rolled back ${msg_uniqe} version and you are now using version created on ${msg_created}')
+	println('To return to the latest installed nightly version, use the command ${msg_latest}')
 }
 
 // TODO: send it to the helper file
@@ -332,7 +334,6 @@ fn get_current_version(symlink_path string) string {
 	return ''
 }
 
-// TEST: no.2 I need to test this nightly thing
 fn use_version(version string) {
 	symlink_path := '/usr/local/bin/nvim'
 	mut neovim_binary := ''
@@ -361,8 +362,6 @@ fn use_version(version string) {
 	} else {
 		neovim_binary = target_dir_stable + version + '/nvim-macos/bin/nvim'
 	}
-	// Del: this print - when the test no2 is done
-	println(neovim_binary)
 	msg := term.bold(term.cyan('${version}'))
 	// Check if the specified version's binary exists
 	if !os.exists(neovim_binary) {
@@ -384,7 +383,8 @@ fn use_version(version string) {
 		eprintln('Failed to create symlink: ${err}')
 		return
 	}
-	println('Using Neovim version ${msg} now.')
+	print_success_message('Currently Using Neovim version ${msg}')
+	// println('Using Neovim version ${msg} now.')
 }
 
 fn print_current_version() {
@@ -415,7 +415,7 @@ fn check_current_version() string {
 		parts := symlink_target.split('/')
 		for part in parts {
 			if part.starts_with('20') { // for sure dates start with '20'
-				return 'You are using the nightly version created at ' + term.bold(term.cyan(part))
+				return 'You are using the nightly version created on ' + term.bold(term.cyan(part))
 			}
 		}
 	} else if symlink_target.contains('stable') {
@@ -511,6 +511,7 @@ fn install_specific_stable(version string) {
 	println('Neovim version ${msg} installed successfully!')
 }
 
+// FIX: check if the latest pulled veriosn is already installed before continue
 fn update_nightly() {
 	version_file_path := target_nightly + 'versions_info.json'
 	if !os.exists(version_file_path) {
@@ -534,6 +535,7 @@ fn update_nightly() {
 	// Extract the unique identifier and timestamp
 	node_id := release_info.node_id
 	created_at := release_info.created_at
+	// FIX: add the check logix here
 
 	// Create the target directory for the new version
 	date_time_dir := time.parse_rfc3339(created_at) or {
