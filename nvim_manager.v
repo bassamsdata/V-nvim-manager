@@ -154,24 +154,25 @@ fn main() {
 	app.parse(os.args)
 }
 
-  // NOTE: this is a draft version of the clean
+// NOTE: this is a draft version of the clean
 fn clean(version string) {
 	if version == 'nightly' {
-		// Delete all nightly versions
-		for entry in os.walk(target_dir_nightly) {
-			if entry.is_dir {
-				os.rmdir_all(entry.path) or {
-					eprintln('Failed to remove directory: ${entry.path}: ${err}')
-				}
+		// Delete all nightly versions - // walk do nested dirs
+		// TODO: should the file be updated or deleted as well
+		// should we do exist condition as well?
+		// add colorful messages to the user
+		entries := os.ls(target_dir_nightly) or { [] }
+		for entry in entries {
+			if os.is_dir(os.join_path(target_dir_nightly, entry)) {
+				os.rmdir_all(entry) or { eprintln('Failed to remove directory: ${entry}: ${err}') }
 			}
 		}
 	} else if version == 'all' {
 		// Delete all versions
-		for entry in os.walk(home_dire + '/.local/share/nv_manager/') {
-			if entry.is_dir {
-				os.rmdir_all(entry.path) or {
-					eprintln('Failed to remove directory: ${entry.path}: ${err}')
-				}
+		entries := os.ls(app_dir) or { [] }
+		for entry in entries {
+			if os.is_dir(os.join_path(app_dir, entry)) {
+				os.rmdir_all(entry) or { eprintln('Failed to remove directory: ${entry}: ${err}') }
 			}
 		}
 	} else {
