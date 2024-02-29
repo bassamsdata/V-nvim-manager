@@ -5,6 +5,14 @@ import cli
 import term
 import time
 
+// TODO: 1. add clean function
+2. 
+// 2. add rollback limit to 3  --Done, need to allow the user to modify though
+// 3. add config manager - this is probably wuld be in refactoring into golang
+// 4. add blog post about this expereince since I've written this in lua and Vlang and will be in glang
+// 5. add autocompletion feature as well using in the cli.Command module
+// completions := app.generate_completions()
+
 // TODO: organize all these commands
 const home_dire = os.home_dir()
 const neovim_url = 'https://github.com/neovim/neovim/releases/download/nightly/nvim-macos.tar.gz'
@@ -144,6 +152,29 @@ fn main() {
 	}
 	app.setup()
 	app.parse(os.args)
+}
+
+// TODO: build clean function to delete all the installed versions
+// TODO: 2 limit the amount of saved nightly versions to 3
+// I need to think about this thoroughly
+
+fn clean() {
+	// Steps:
+	// 1. readlink the symlink and check if the arg is euqall to stable, nightly
+	// or all, and wharn them that the neovim will not be working.
+	// 2. if nightly provided then:
+	//    a. check if the nightly directory is a vailable
+	//    b. if it is then: delete everything in and print that it was deleted
+	// 3. if stable:
+	//    a. check if the stable directory is a available
+	//    b. if it is then: delete everything in it and print that it was deleted
+	// 4. if all: thems: delete everything in the stable and nightly directories
+	// after check if the directory exists or not.
+	if os.exists(target_nightly) {
+		println('The nightly directory does not exist.')
+		return
+	}
+	println('Cleaning...')
 }
 
 fn setup() {
