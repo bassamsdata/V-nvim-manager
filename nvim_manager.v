@@ -154,27 +154,37 @@ fn main() {
 	app.parse(os.args)
 }
 
-// TODO: build clean function to delete all the installed versions
-// TODO: 2 limit the amount of saved nightly versions to 3
-// I need to think about this thoroughly
-
-fn clean() {
-	// Steps:
-	// 1. readlink the symlink and check if the arg is euqall to stable, nightly
-	// or all, and wharn them that the neovim will not be working.
-	// 2. if nightly provided then:
-	//    a. check if the nightly directory is a vailable
-	//    b. if it is then: delete everything in and print that it was deleted
-	// 3. if stable:
-	//    a. check if the stable directory is a available
-	//    b. if it is then: delete everything in it and print that it was deleted
-	// 4. if all: thems: delete everything in the stable and nightly directories
-	// after check if the directory exists or not.
-	if os.exists(target_nightly) {
-		println('The nightly directory does not exist.')
-		return
+  // NOTE: this is a draft version of the clean
+fn clean(version string) {
+	if version == 'nightly' {
+		// Delete all nightly versions
+		for entry in os.walk(target_dir_nightly) {
+			if entry.is_dir {
+				os.rmdir_all(entry.path) or {
+					eprintln('Failed to remove directory: ${entry.path}: ${err}')
+				}
+			}
+		}
+	} else if version == 'all' {
+		// Delete all versions
+		for entry in os.walk(home_dire + '/.local/share/nv_manager/') {
+			if entry.is_dir {
+				os.rmdir_all(entry.path) or {
+					eprintln('Failed to remove directory: ${entry.path}: ${err}')
+				}
+			}
+		}
+	} else {
+		// Delete a specific stable version
+		target_dir := target_dir_stable + version + '/'
+		if os.exists(target_dir) {
+			os.rmdir_all(target_dir) or {
+				eprintln('Failed to remove directory: ${target_dir}: ${err}')
+			}
+		} else {
+			println('Version ${version} not found.')
+		}
 	}
-	println('Cleaning...')
 }
 
 fn setup() {
