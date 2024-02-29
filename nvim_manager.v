@@ -554,6 +554,31 @@ fn update_nightly() {
 		}
 	}
 
+	// Limit the number of saved versions to 3
+	if existing_versions.len >= 3 {
+		// Remove the oldest version (the first one in the array)
+		oldest_version := existing_versions[0]
+
+		oldest_version_dir_pre := time.parse_rfc3339(oldest_version.created_at) or {
+			eprintln('Error parsing date string: ${err.msg()}')
+			return
+		}
+		oldest_version_dir_pre2 := oldest_version_dir_pre.custom_format('YYYY-MM-DD')
+		oldest_version_dir := target_nightly + oldest_version_dir_pre2 + '/'
+		// Create a new slice that is a copy of the original slice starting from the second element
+		existing_versions = existing_versions[1..].clone()
+
+		// Delete the oldest version directory
+		os.rmdir_all(oldest_version_dir) or {
+			eprintln('Failed to remove oldest version directory: ${err}')
+			return
+		}
+		// Renumber the remaining versions
+		for i := 0; i < existing_versions.len; i++ {
+			existing_versions[i].unique_number = i + 1
+		}
+	}
+
 	// Create the target directory for the new version
 	date_time_dir := time.parse_rfc3339(created_at) or {
 		eprintln('Error parsing date string: ${err.msg()}')
