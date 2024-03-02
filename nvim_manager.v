@@ -5,16 +5,18 @@ import cli
 import term
 import time
 
-// TODO: 1. add clean function
-2. 
-// 2. add rollback limit to 3  --Done, need to allow the user to modify though
-// 3. add config manager - this is probably wuld be in refactoring into golang
-// 4. add blog post about this expereince since I've written this in lua and Vlang and will be in glang
-// 5. add autocompletion feature as well using in the cli.Command module
+// TODO: 1. add clean function << almosr done, need polishing
+// 2. add rollback limit to 3  << almost done, need to allow the user to modify though
+// 3. add `rollback ls` command to list the versions that have been rolled back to
+// 4.  make update for stable versions
+// 5. Modularize this app
+// 6. add config manager - this is probably wuld be in refactoring into golang
+// 7. add blog post about this expereince since I've written this in lua and Vlang and will be in glang
+// 9. add autocompletion feature as well using in the cli.Command module
 // completions := app.generate_completions()
 
-// TODO: organize all these commands
 const home_dire = os.home_dir()
+const app_dir = home_dire + '/.local/share/nv_manager/'
 const neovim_url = 'https://github.com/neovim/neovim/releases/download/nightly/nvim-macos.tar.gz'
 const target_nightly = home_dire + '/.local/share/nv_manager/nightly/'
 const stable_base_url = 'https://github.com/neovim/neovim/releases/download/v'
@@ -35,7 +37,6 @@ mut:
 	unique_number int
 }
 
-// TODO: oops I haven't thought about uninstall yet
 fn main() {
 	mut app := cli.Command{
 		name: 'nvimv'
@@ -63,7 +64,6 @@ fn main() {
 					}
 				}
 			},
-			// TODO: make update for stable versions
 			cli.Command{
 				name: 'update'
 				description: 'update the local ' + term.bold(term.cyan('nightly')) + ' version'
@@ -116,7 +116,6 @@ fn main() {
 				}
 			},
 			cli.Command{
-				// TODO: add `rollback ls` command to list the versions that have been rolled back to
 				name: 'rollback'
 				description: 'Rollback to a specific version - only works on nightly versions e.g. `nvimv rollback 1` to rollback to most previous one'
 				execute: fn (cmd cli.Command) ! {
@@ -159,6 +158,7 @@ fn clean(version string) {
 	if version == 'nightly' {
 		// Delete all nightly versions - // walk do nested dirs
 		// TODO: should the file be updated or deleted as well
+		// should also unlink the symlink
 		// should we do exist condition as well?
 		// add colorful messages to the user
 		entries := os.ls(target_dir_nightly) or { [] }
@@ -188,6 +188,8 @@ fn clean(version string) {
 	}
 }
 
+// NOTE: this is a prod-ready function
+// add json file to nightly dir
 fn setup() {
 	version_file_path := target_nightly + 'versions_info.json'
 	if os.exists(version_file_path) {
@@ -208,6 +210,7 @@ fn setup() {
 }
 
 // Rollback to version --------------------------------------------------------
+// NOTE: this is a prod-ready function
 // NOTE: to revert back to latest installed nightly version, use `nvimv use nightly`
 fn rollback_to_version(unique_number int) {
 	// Read the list of installed versions
@@ -265,7 +268,6 @@ fn rollback_to_version(unique_number int) {
 	println('To return to the latest installed nightly version, use the command ${msg_latest}')
 }
 
-// TODO: send it to the helper file
 // Function to print a message with a specific color
 fn print_colored_message(color_function fn (string) string, message string) {
 	colored_message := color_function(message)
@@ -376,6 +378,7 @@ fn get_current_version(symlink_path string) string {
 	return ''
 }
 
+// NOTE: this is a prod-ready function
 fn use_version(version string) {
 	symlink_path := '/usr/local/bin/nvim'
 	mut neovim_binary := ''
@@ -393,7 +396,7 @@ fn use_version(version string) {
 			}
 		}
 
-		// Sort directories by date (assuming names are in YYYY-MM-DD format)
+		// Sort directories by date
 		dirs.sort()
 
 		// Select the most recent directory
@@ -402,7 +405,7 @@ fn use_version(version string) {
 		// Construct the path to the Neovim binary
 		neovim_binary = target_nightly + latest_dir + '/nvim-macos/bin/nvim'
 	} else {
-		neovim_binary = target_dir_stable + version + '/nvim-macos/bin/nvim'
+		neovim_binary
 	}
 	msg := term.bold(term.cyan('${version}'))
 	// Check if the specified version's binary exists
@@ -425,15 +428,18 @@ fn use_version(version string) {
 		eprintln('Failed to create symlink: ${err}')
 		return
 	}
+	// NOTE: if we put any text after the variable $msg, it doesn't inheret the colors
 	print_success_message('Currently Using Neovim version ${msg}')
 	// println('Using Neovim version ${msg} now.')
 }
 
+// NOTE: this is a prod-ready function
 fn print_current_version() {
 	version := check_current_version()
 	println('${version} ')
 }
 
+// NOTE: this is a prod-ready function
 fn check_current_version() string {
 	symlink_path := '/usr/local/bin/nvim'
 	if !os.exists(symlink_path) || !os.is_link(symlink_path) {
@@ -449,14 +455,13 @@ fn check_current_version() string {
 	}
 
 	// Parse the output to find the version
-	// This assumes the symlink output includes the version in the path
 	symlink_target := result.output.trim('\n') // Correct usage of trim_space
 	// Check if the path contains "nightly" or "stable"
 	if symlink_target.contains('nightly') {
 		// Extract the date from the path
 		parts := symlink_target.split('/')
 		for part in parts {
-			if part.starts_with('20') { // for sure dates start with '20'
+			if part.starts_with('20') { // for sure dates start with '20' :)
 				return 'You are using the nightly version created on ' + term.bold(term.cyan(part))
 			}
 		}
@@ -485,6 +490,7 @@ fn extract_version_from_path(path string) (string, string) {
 }
 
 // TODO: need enhancements to let the user specify the version
+// Maybe in the Go version
 fn list_remote_versions() {
 	resp := http.get(tags_url) or {
 		eprintln('Failed to fetch Neovim versions: ${err}')
@@ -506,9 +512,8 @@ fn list_remote_versions() {
 	}
 }
 
-// NOTE: this is almost a prod-ready function
+// NOTE: this is a prod-ready function
 fn install_specific_stable(version string) {
-	// TODO: insure this is the correct way of dirs
 	stable_url := stable_base_url + version + '/nvim-macos.tar.gz'
 	target_dir := target_dir_stable + version + '/'
 
@@ -553,7 +558,7 @@ fn install_specific_stable(version string) {
 	println('Neovim version ${msg} installed successfully!')
 }
 
-// FIX: check if the latest pulled veriosn is already installed before continue
+// NOTE: this is almost prod-ready function
 fn update_nightly() {
 	version_file_path := target_nightly + 'versions_info.json'
 	if !os.exists(version_file_path) {
@@ -591,7 +596,7 @@ fn update_nightly() {
 	for version in existing_versions {
 		if version.node_id == node_id {
 			mut msg := term.bold(term.cyan('vnvim use nightly'))
-			println('The latest nightly version is already installed. please use the command ${msg} ')
+			print_warning_message('The latest nightly version is already installed.\nplease use the command ${msg} ')
 			return
 		}
 	}
@@ -682,6 +687,7 @@ fn update_nightly() {
 	println('Neovim ${msg} updated to the latest version.')
 }
 
+// NOTE: this is a prod-ready function
 fn install_nightly() {
 	// Fetch the latest nightly release information from GitHub API
 	resp := http.get(tags_nightly_url) or {
